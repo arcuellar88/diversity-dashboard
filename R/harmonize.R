@@ -29,29 +29,49 @@ mecovi_vars <- list()
 
 
   for(i in 1:length(files)){
+  
+    # remove .csv from the file name
+    fname = str_sub(files[i],1,-5) 
     
-    db <-read.dta(paste0("./data/",files[i]), convert.factors=factor)
-    
-    #name of the columns
-    dbVars <- as.data.frame(colnames(db))
-    colnames(dbVars)<- c("var")
-    
-    fname = str_sub(files[i],1,-5) # remove .csv from the file name
     
     print(paste0("Reading: ",fname))
     
-    db2<-db[,t(vars)]
+    #Read dta  
+    db <-read.dta(paste0("./data/",files[i]), convert.factors=factor)
+    
+    #Create dataset of variables
+    dbVars <- as.data.frame(colnames(db))
+    colnames(dbVars)<- c("var")
+    
+    
+    # Find names of missing columns
+    missing <- setdiff(vars$x, names(db))
+    
+    print(paste0("# missing columns: ",length(missing)))
+    
+    db[missing] <- NA
+    
+    db<-db[vars$x]
     
     # creates a variable with the file name
-    db2$survey = rep(fname, nrow(db)) 
+    db$survey = rep(fname, nrow(db)) 
     dbVars$survey=rep(fname, nrow(dbVars)) 
     
+    db$techo_ch <- factor(db$techo_ch)
+    db$tipopen_ci <-factor(db$tipopen_ci)
     
+    #db <- db %>%  mutate(folio=as.character(db$folio)) 
     
-    mecovi_list[[i]] = db2  
-    mecovi_vars[[i]] = dbVars  
+    #mecovi_list[[i]] = db  
+    #mecovi_vars[[i]] = dbVars  
     
-    #write.table(db2, file=paste0(fname,".csv"), sep=",", col.names=TRUE, row.names=FALSE, quote=TRUE, na="", fileEncoding="UTF-8")
+    if(i==1){
+      write.table(db, file="full_data_FACTOR.csv", sep=",", col.names=TRUE, row.names=FALSE, quote=TRUE, na="", fileEncoding="UTF-8")
+    }
+    else {
+       write.table(db, file="full_data_FACTOR.csv", sep=",",  col.names=FALSE,append=TRUE, row.names=FALSE, quote=TRUE, na="", fileEncoding="UTF-8")  
+     } 
+    
   }
 
 #print("Starting: bind rows")
@@ -60,6 +80,6 @@ mecovi_vars <- list()
 
 #write.table(full_data, file="full_data_FACTOR.csv", sep=",", col.names=TRUE, row.names=FALSE, quote=TRUE, na="", fileEncoding="UTF-8")
 #write.table(full_vars, file="full_vars.csv", sep=",", col.names=TRUE, row.names=FALSE, quote=TRUE, na="", fileEncoding="UTF-8")
-mecovi_list
+#full_data
 
 }
