@@ -15,7 +15,7 @@
 library(stringr)
 library(foreign)
 library(dplyr)
-#db <-read.dta(paste0("./data/BOL_2014m11_BID.dta"), convert.factors=True)
+#db <-read.dta(paste0("./data/PRY_2011m10_m12_BID.dta"), convert.factors=TRUE)
 
 readFile <- function(factor=FALSE)
 {
@@ -24,8 +24,8 @@ vars <- read.table("harmonized_vars.csv", header=T)
 
 files <- list.files("./data") 
 
-mecovi_list <- list()
-mecovi_vars <- list()
+#mecovi_list <- list()
+#mecovi_vars <- list()
   for(i in 1:length(files)){
   
     # remove .csv from the file name
@@ -65,6 +65,28 @@ mecovi_vars <- list()
     db$piso_ch<-as.character(db$piso_ch)
     db$raza_ci<-as.character(db$raza_ci)
     
+    
+    # Guatemala
+    if(grepl("GTM_",fname))
+    {
+      print(paste0("# Guatemala exception: ",fname))
+      db$luzmide_ch<-as.numeric(db$luzmide_ch)-1
+      db$bano_ch<-as.numeric(db$bano_ch)-1
+      db$combust_ch<-as.numeric(db$combust_ch)-1
+    }
+    
+    
+    #Ecuador 2011 2012
+    if(grepl("ECU_",fname) & (grepl("2012",fname) | grepl("2011",fname)))
+    {
+      print(paste0("# Ecuador exception: ",fname))
+      
+      dict<-read.csv("dict_ecuador.csv", header=TRUE,fileEncoding="UTF-8")
+      db$region_c <- with(dict, name[match(db$region_c, id)])
+    }
+       
+    
+    
     db<-db[,t(vars)]
     
     # creates a variable with the file name
@@ -72,9 +94,12 @@ mecovi_vars <- list()
     #dbVars$survey=rep(fname, nrow(dbVars)) 
   
   
-    mecovi_list[[i]] = db  
+    #mecovi_list[[i]] = db  
     #mecovi_vars[[i]] = dbVars  
+  
     
+    write.table(db, file=paste0("full_data_",fname,".csv"), sep=",", col.names=FALSE, append=FALSE, row.names=FALSE, quote=TRUE, na="", fileEncoding="UTF-8")
+      
     #if(i==1){
      # write.csv(db, file="full_data_FACTOR.csv", sep=",", col.names=TRUE, append=FALSE, row.names=FALSE, quote=TRUE, na="", fileEncoding="UTF-8")
     #}
@@ -84,7 +109,7 @@ mecovi_vars <- list()
     
   }
 
-mecovi_list
+#mecovi_list
 #print("Starting: bind rows")
 #full_data <- bind_rows(mecovi_list) 
 #full_vars <- bind_rows(mecovi_vars) 
@@ -152,3 +177,12 @@ printDF<-function(mecovi_list)
   }
   
 }
+
+printDT<-function(mecovi_list, factor)
+{
+  for(i in 1:length(mecovi_list)){
+    unique(str(mecovi_list[[i]]$factor))
+    }
+  
+}
+  
